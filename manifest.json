@@ -7,5 +7,29 @@
         "16": "icons/check16x16.png",
         "32": "icons/check32x32.png",
         "128": "icons/check128x128.png"
-    }
+    },
+    "action": {
+        "default_popup": "popup/popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "lib/jquery.min.js",
+                "content-scripts/content.js"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "images/*.jpg"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
 }
