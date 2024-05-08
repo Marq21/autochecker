@@ -11,25 +11,8 @@
     "action": {
         "default_popup": "popup/popup.html"
     },
-    "content_scripts": [
-        {
-            "matches": [
-                "<all_urls>"
-            ],
-            "js": [
-                "lib/jquery.min.js",
-                "content-scripts/content.js"
-            ]
-        }
-    ],
-    "web_accessible_resources": [
-        {
-            "resources": [
-                "images/*.jpg"
-            ],
-            "matches": [
-                "<all_urls>"
-            ]
-        }
-    ]
+    "permissions": ["scripting", "activeTab"],
+    "background": [],
+    "content_scripts": [],
+    "web_accessible_resources": []
 }
