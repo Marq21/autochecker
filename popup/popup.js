@@ -19,6 +19,6 @@ function getAllCheckBoxes() {
     elems = document.querySelectorAll('input[type=checkbox]');
     for (let index = 2; index < elems.length; index++) {
         const element = elems[index];
-        element.click()
+        setTimeout(() => { element.click(); }, 2000);
     }
 }
