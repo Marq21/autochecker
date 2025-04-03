@@ -7,8 +7,19 @@
     </head>
     <body>
         <h4>MQ_Autochecker</h1>
-        <button id="startBtn" type="button">Start</button>
-        <button id="emptyContainersButton" type="button">Тарники</button>
+        <button id="startBtn" class="button-64" role="button"><span class="text">Выдать отделение</span></button>
+        <button id="startBtnAll" class="button-64" role="button"><span class="text">Выдать заказ полностью</span></button>
+        <span>
+            <button id="startBtnCount" class="button-64" role="button">
+                <span class="text">
+                        Выдать отделения(кол.)
+                </span>
+             </button>
+            <input id="inputNumber" type="number" name="input" value="0" min="0" step="1" max="10000" />
+        </span>
+        <button id="emptyContainersButton" class="button-64" role="button"><span class="text">Тарники</span></button>
+        
+        
         <script src="/popup/popup.js"></script>       
     </body>
 </html>

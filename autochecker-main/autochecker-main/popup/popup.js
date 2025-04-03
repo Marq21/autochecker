@@ -1,4 +1,11 @@
 const startBtn = document.getElementById("startBtn");
+const startBtnAll = document.getElementById("startBtnAll");
+const emptyContainersButton = document.getElementById("emptyContainersButton");
+const startBtnCount = document.getElementById("startBtnCount");
+const inputNumber = document.getElementById("inputNumber");
+
+const checkBoxesQuerySelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._order_py5g5_53 > div > table > tbody > tr > td:nth-child(1) > label > div > input";
+
 startBtn.addEventListener("click", () => {
     chrome.tabs.query({ active: true }, function (tabs) {
         var tab = tabs[0];
@@ -6,7 +13,8 @@ startBtn.addEventListener("click", () => {
             chrome.scripting.executeScript(
                 {
                     target: { tabId: tab.id, allFrames: true },
-                    func: getAllCheckBoxes
+                    func: getAllCheckBoxesExceptOne,
+                    args: [checkBoxesQuerySelector],
                 },
             )
         } else {
@@ -15,7 +23,40 @@ startBtn.addEventListener("click", () => {
     })
 })
 
-const emptyContainersButton = document.getElementById("emptyContainersButton");
+startBtnAll.addEventListener("click", () => {
+    chrome.tabs.query({ active: true }, function (tabs) {
+        var tab = tabs[0];
+        if (tab) {
+            chrome.scripting.executeScript(
+                {
+                    target: { tabId: tab.id, allFrames: true },
+                    func: getAllCheckBoxes,
+                    args: [checkBoxesQuerySelector],
+                },
+            )
+        } else {
+            alert("There are no active tabs")
+        }
+    })
+})
+
+startBtnCount.addEventListener("click", () => {
+    chrome.tabs.query({ active: true }, function (tabs) {
+        var tab = tabs[0];
+        if (tab) {
+            chrome.scripting.executeScript(
+                {
+                    target: { tabId: tab.id, allFrames: true },
+                    func: getFixedCheckBoxes,
+                    args: [parseInt(inputNumber.value), checkBoxesQuerySelector],
+                },
+            )
+        } else {
+            alert("There are no active tabs")
+        }
+    })
+})
+
 emptyContainersButton.addEventListener("click", () => {
     chrome.tabs.query({ active: true }, function (tabs) {
         var tab = tabs[0];
@@ -23,7 +64,7 @@ emptyContainersButton.addEventListener("click", () => {
             chrome.scripting.executeScript(
                 {
                     target: { tabId: tab.id, allFrames: true },
-                    func: getAllEmptyContainerBoxes
+                    func: getAllEmptyContainerBoxes,
                 },
             )
         } else {
@@ -32,27 +73,44 @@ emptyContainersButton.addEventListener("click", () => {
     })
 })
 
-function getAllCheckBoxes() {
-    elems = document.querySelectorAll('input[type=checkbox]');
-    for (let index = 2; index < elems.length; index++) {
+function getAllCheckBoxes(elementsQuerySelector) {
+    elems = document.querySelectorAll(elementsQuerySelector);
+    for (let index = 0; index < elems.length; index++) {
         const element = elems[index];
-        setTimeout(() => { element.click(); }, 2000);
+        setTimeout(() => { element.click(); }, 500);
+    }
+}
+
+function getAllCheckBoxesExceptOne(elementsQuerySelector) {
+    elems = document.querySelectorAll(elementsQuerySelector);
+    for (let index = 1; index < elems.length; index++) {
+        const element = elems[index];
+        setTimeout(() => { element.click(); }, 500);
     }
 }
 
 function getAllEmptyContainerBoxes() {
-    const substring = "%301%";
-    const topLvlString = 'Тарные ящики';
-    topLvlElements = Array.from(document.getElementsByClassName('_groupTitle_100lb_28'))
-        .find(el => el.innerText === topLvlString).parentElement;
-    elems = topLvlElements.getElementsByClassName("_element_uwum7_1 _list_uwum7_20");
-    console.log(elems);
-    for (let index = 0; index < elems.length; index++) {
-        let elem = elems[index];
-        let elWithText = elem.querySelector('div:nth-child(2) > div:nth-child(1) > div:nth-child(1)');
-        if (elWithText.innerText.includes(substring)) {
-            let inputElement = elem.querySelector('label > div > input[type=checkbox]');
-            inputElement.click();
-        }
+    var topElements = document.querySelector("#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_o3j3w_1 > div._outboundCommander_1014z_1 > div:nth-child(2) > div:nth-child(5) > div");
+    if (topElements === null) {
+        alert('Нет тарных ящиков на отправление');
+        return;
+    }
+    var containersChildNodes = topElements.childNodes;
+    for (let index = 0; index < containersChildNodes.length; index++) {
+        let node = containersChildNodes[index];
+        if (node !== null && node.nodeType === 1)
+            node.querySelector("label > div > input").click();
+    }
+}
+
+function getFixedCheckBoxes(number, checkBoxesQuerySelector) {
+    elems = document.querySelectorAll(checkBoxesQuerySelector);
+    if (number > elems.length) {
+        alert("Число больше количества позиций");
+        return;
+    }
+    for (let index = 0; index < number; index++) {
+        const element = elems[index];
+        setTimeout(() => { element.click(); }, 500);
     }
 }
