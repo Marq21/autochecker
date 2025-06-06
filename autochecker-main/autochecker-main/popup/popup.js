@@ -4,7 +4,7 @@ const emptyContainersButton = document.getElementById("emptyContainersButton");
 const startBtnCount = document.getElementById("startBtnCount");
 const inputNumber = document.getElementById("inputNumber");
 
-const checkBoxesQuerySelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._order_py5g5_53 > div > table > tbody > tr > td:nth-child(1) > label > div > input";
+const checkBoxesQuerySelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._order_19vq7_53 > div > table > tbody > tr > td:nth-child(1) > label > div > input";
 
 startBtn.addEventListener("click", () => {
     chrome.tabs.query({ active: true }, function (tabs) {
