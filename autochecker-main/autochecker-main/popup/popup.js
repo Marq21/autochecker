@@ -90,17 +90,30 @@ function getAllCheckBoxesExceptOne(elementsQuerySelector) {
 }
 
 function getAllEmptyContainerBoxes() {
-    var topElements = document.querySelector("#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_o3j3w_1 > div._outboundCommander_1014z_1 > div:nth-child(2) > div:nth-child(5) > div");
-    if (topElements === null) {
-        alert('Нет тарных ящиков на отправление');
+
+    const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_1pbda_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
+
+    const rightColumn = document.querySelector(rightColumnSelector);
+
+    if (!rightColumn) {
+        console.error("❌ Правая колонка не найдена.");
         return;
     }
-    var containersChildNodes = topElements.childNodes;
-    for (let index = 0; index < containersChildNodes.length; index++) {
-        let node = containersChildNodes[index];
-        if (node !== null && node.nodeType === 1)
-            node.querySelector("label > div > input").click();
-    }
+
+    const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_4j0aa_17"));
+
+    const filteredItems = items.filter(item => {
+        const text = item.textContent;
+        return text.includes("%301%") || text.includes("ВТ");
+    });
+
+    filteredItems.forEach(item => {
+        const input = item.querySelector("input[type='checkbox'], input[type='radio']");
+        if (input && typeof input.click === "function") {
+            input.click();
+        }
+    });
+    console.log(`✅ Проставлено ${filteredItems.length} галочек через click().`);
 }
 
 function getFixedCheckBoxes(number, checkBoxesQuerySelector) {
