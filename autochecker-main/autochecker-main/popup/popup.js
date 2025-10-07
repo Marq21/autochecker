@@ -90,30 +90,33 @@ function getAllCheckBoxesExceptOne(elementsQuerySelector) {
 }
 
 function getAllEmptyContainerBoxes() {
+  // Селектор правого блока (откуда брать тарные ящики)
+  const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_les3l_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
+  const rightColumn = document.querySelector(rightColumnSelector);
 
-    const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_1pbda_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
+  if (!rightColumn) {
+    console.error("❌ Правый блок не найден.");
+    return;
+  }
 
-    const rightColumn = document.querySelector(rightColumnSelector);
+  // Ищем все тарные ящики (новый класс)
+  const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_1b09z_17"));
 
-    if (!rightColumn) {
-        console.error("❌ Правая колонка не найдена.");
-        return;
+  const filteredItems = items.filter(item => {
+    const text = item.textContent;
+    return text.includes("%301%") || text.includes("ВТ") || text.includes("BT");
+  });
+
+  let clickedCount = 0;
+  filteredItems.forEach(item => {
+    const input = item.querySelector("input[type='checkbox']");
+    if (input && typeof input.click === "function") {
+      input.click();
+      clickedCount++;
     }
+  });
 
-    const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_4j0aa_17"));
-
-    const filteredItems = items.filter(item => {
-        const text = item.textContent;
-        return text.includes("%301%") || text.includes("ВТ");
-    });
-
-    filteredItems.forEach(item => {
-        const input = item.querySelector("input[type='checkbox'], input[type='radio']");
-        if (input && typeof input.click === "function") {
-            input.click();
-        }
-    });
-    console.log(`✅ Проставлено ${filteredItems.length} галочек через click().`);
+  console.log(`✅ Выбрано ${clickedCount} тарных ящиков (${filteredItems.length} найдено).`);
 }
 
 function getFixedCheckBoxes(number, checkBoxesQuerySelector) {
