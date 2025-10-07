@@ -1,7 +1,15 @@
 body {
     width: 300px;
-    background-color: burlywood;
+    background: -webkit-linear-gradient(180deg, #48ce41,#8eb648,#a3a163);
+    background: linear-gradient(180deg, #48ce41,#8eb648,#a3a163);  
 }
+
+.input-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 3px 0;
+}                                           
 
 /* CSS */
 .button-64 {
