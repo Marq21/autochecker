@@ -3,6 +3,9 @@
     "version": "0.0.0.2",
     "manifest_version": 3,
     "description": "An extension to check checkboxes on client's order page in PVZturbo web-application.",
+    "background": {
+        "service_worker": "background.js"
+    },
     "icons": {
         "16": "icons/check16x16.png",
         "32": "icons/check32x32.png",
@@ -11,8 +14,15 @@
     "action": {
         "default_popup": "popup/popup.html"
     },
-    "permissions": ["scripting", "activeTab"],
-    "background": [],
+    "permissions": [
+        "scripting",
+        "activeTab",
+        "notifications",
+        "storage"
+        ],
+    "host_permissions": [
+        "https://api.github.com/*"
+    ],
     "content_scripts": [],
     "web_accessible_resources": []
 }
