@@ -6,6 +6,51 @@ const inputNumber = document.getElementById("inputNumber");
 
 const tableRowsQuerySelector = "div._order_1ba5m_53 table tbody tr";
 
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    if (chrome.storage && chrome.storage.local) {
+      const result = await chrome.storage.local.get(["updateAvailable", "latestVersion", "releaseBody"]);
+      if (result.updateAvailable) {
+        showUpdateNotification(result.latestVersion, result.releaseBody);
+      }
+    } else {
+      if (globalThis.updateAvailable) {
+        showUpdateNotification(globalThis.latestVersion, globalThis.releaseBody);
+      }
+    }
+  } catch (error) {
+    console.error("❌ Ошибка при проверке обновления в popup:", error);
+  }
+});
+
+function showUpdateNotification(version, body) {
+  const updateDiv = document.createElement("div");
+  updateDiv.id = "updateNotification";
+  updateDiv.innerHTML = `
+    <div style="background: #ffeb3b; color: black; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+      <strong>📦 Доступна новая версия: ${version}</strong><br>
+      <p>${body}</p>
+      <button id="downloadUpdateBtn" style="margin-top: 5px; padding: 5px 10px; cursor: pointer;">Скачать ZIP</button>
+    </div>
+  `;
+
+  document.body.prepend(updateDiv);
+
+  document.getElementById("downloadUpdateBtn").addEventListener("click", () => {
+    if (chrome.storage && chrome.storage.local) {
+      chrome.storage.local.get(["downloadUrl"], (res) => {
+        if (res.downloadUrl) {
+          chrome.tabs.create({ url: res.downloadUrl });
+        }
+      });
+    } else {
+      if (globalThis.downloadUrl) {
+        chrome.tabs.create({ url: globalThis.downloadUrl });
+      }
+    }
+  });
+}
+
 startBtn.addEventListener("click", () => {
     chrome.tabs.query({ active: true }, function (tabs) {
         var tab = tabs[0];
