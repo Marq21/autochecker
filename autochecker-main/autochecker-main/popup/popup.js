@@ -1,10 +1,15 @@
+// Старые кнопки (оставляем id и названия)
 const startBtn = document.getElementById("startBtn");
 const startBtnAll = document.getElementById("startBtnAll");
 const emptyContainersButton = document.getElementById("emptyContainersButton");
 const startBtnCount = document.getElementById("startBtnCount");
 const inputNumber = document.getElementById("inputNumber");
 
-const tableRowsQuerySelector = "div._order_1ba5m_53 table tbody tr";
+// Новая кнопка: Снять выделение с "К выдаче"
+const uncheckGivenOutBtn = document.getElementById("uncheckGivenOutBtn");
+
+// Новые функции (как раньше) — но обновлённые селекторы
+const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_les3l_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -51,139 +56,201 @@ function showUpdateNotification(version, body) {
   });
 }
 
+// ✅ Старая кнопка: Выдать все, кроме дешёвого (новая логика)
 startBtn.addEventListener("click", () => {
-    chrome.tabs.query({ active: true }, function (tabs) {
-        var tab = tabs[0];
-        if (tab) {
-            chrome.scripting.executeScript(
-                {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: getAllCheckBoxesExceptOne,
-                    args: [tableRowsQuerySelector],
-                },
-            );
-        } else {
-            alert("There are no active tabs");
-        }
-    });
-});
-
-startBtnAll.addEventListener("click", () => {
-    chrome.tabs.query({ active: true }, function (tabs) {
-        var tab = tabs[0];
-        if (tab) {
-            chrome.scripting.executeScript(
-                {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: getAllCheckBoxes,
-                    args: [tableRowsQuerySelector],
-                },
-            );
-        } else {
-            alert("There are no active tabs");
-        }
-    });
-});
-
-startBtnCount.addEventListener("click", () => {
-    const number = parseInt(inputNumber.value, 10);
-    if (isNaN(number) || number <= 0) {
-        alert("Введите корректное число");
-        return;
+  chrome.tabs.query({ active: true }, function (tabs) {
+    var tab = tabs[0];
+    if (tab) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id, allFrames: true },
+          func: clickAllGiveOutItemsExceptCheapest,
+        },
+      );
+    } else {
+      alert("There are no active tabs");
     }
-
-    chrome.tabs.query({ active: true }, function (tabs) {
-        var tab = tabs[0];
-        if (tab) {
-            chrome.scripting.executeScript(
-                {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: getFixedCheckBoxes,
-                    args: [number, tableRowsQuerySelector],
-                },
-            );
-        } else {
-            alert("There are no active tabs");
-        }
-    });
+  });
 });
 
-emptyContainersButton.addEventListener("click", () => {
-    chrome.tabs.query({ active: true }, function (tabs) {
-        var tab = tabs[0];
-        if (tab) {
-            chrome.scripting.executeScript(
-                {
-                    target: { tabId: tab.id, allFrames: true },
-                    func: getAllEmptyContainerBoxes,
-                },
-            );
-        } else {
-            alert("There are no active tabs");
-        }
-    });
+// ✅ Старая кнопка: Выдать всё (новая логика)
+startBtnAll.addEventListener("click", () => {
+  chrome.tabs.query({ active: true }, function (tabs) {
+    var tab = tabs[0];
+    if (tab) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id, allFrames: true },
+          func: clickAllGiveOutItems,
+        },
+      );
+    } else {
+      alert("There are no active tabs");
+    }
+  });
 });
 
-// ✅ Внутри каждой функции — логика ожидания элементов
-function getAllCheckBoxes(tableRowsQuerySelector) {
-  const rows = document.querySelectorAll(tableRowsQuerySelector);
-  const inputs = [];
-
-  rows.forEach(row => {
-    const input = row.querySelector("td:nth-child(1) > label > div > input[type='checkbox']");
-    if (input && !input.disabled && input.offsetParent !== null) inputs.push(input);
-  });
-
-  console.log(`🔍 Найдено ${inputs.length} доступных чекбоксов.`);
-
-  inputs.forEach((input, index) => {
-    setTimeout(() => {
-      // Проверяем снова, что элемент всё ещё доступен
-      if (input && !input.disabled && input.offsetParent !== null) {
-        const event = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0,
-        });
-        input.dispatchEvent(event);
-      } else {
-        console.log(`❌ Пропущен элемент #${index} при клике:`, {
-          input: input,
-          disabled: input?.disabled || 'n/a',
-          offsetParent: input?.offsetParent || 'n/a',
-        });
-      }
-    }, index * 50); // 50 мс задержка между кликами
-  });
-
-  console.log(`✅ Запланировано ${inputs.length} кликов.`);
-}
-
-function getAllCheckBoxesExceptOne(tableRowsQuerySelector) {
-  const rows = document.querySelectorAll(tableRowsQuerySelector);
-
-  if (rows.length === 0) {
-    console.log("❌ Не найдено строк товаров.");
+// ✅ Старая кнопка: Выдать N штук (новая логика)
+startBtnCount.addEventListener("click", () => {
+  const number = parseInt(inputNumber.value, 10);
+  if (isNaN(number) || number <= 0) {
+    alert("Введите корректное число");
     return;
   }
 
-  const items = [];
-
-  rows.forEach((row, index) => {
-    const input = row.querySelector("td:nth-child(1) > label > div > input[type='checkbox']");
-    if (!input || input.disabled || input.offsetParent === null) {
-      console.log(`❌ Пропущена строка #${index}: чекбокс недоступен.`);
-      return;
+  chrome.tabs.query({ active: true }, function (tabs) {
+    var tab = tabs[0];
+    if (tab) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id, allFrames: true },
+          func: clickAllGiveOutItemsFixed,
+          args: [number],
+        },
+      );
+    } else {
+      alert("There are no active tabs");
     }
+  });
+});
 
-    // 🆕 Находим цену относительно строки
-    const priceCell = row.querySelector("td.ozi__table-cell-base__cell__n2QEE._innerTable_nakzj_104 th:nth-child(2) div.ozi__data-content__label__TA_HC");
+// ✅ Возвращённая кнопка: Выбрать тарные ящики (старая логика, обновлённые селекторы)
+emptyContainersButton.addEventListener("click", () => {
+  chrome.tabs.query({ active: true }, function (tabs) {
+    var tab = tabs[0];
+    if (tab) {
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tab.id, allFrames: true },
+          func: getAllEmptyContainerBoxes,
+        },
+      );
+    } else {
+      alert("There are no active tabs");
+    }
+  });
+});
+
+// ✅ Новая кнопка: Снять выделение с "К выдаче"
+if (uncheckGivenOutBtn) {
+  uncheckGivenOutBtn.addEventListener("click", () => {
+    chrome.tabs.query({ active: true }, function (tabs) {
+      var tab = tabs[0];
+      if (tab) {
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tab.id, allFrames: true },
+            func: clickAllUncheckGivenOutItems,
+          },
+        );
+      } else {
+        alert("There are no active tabs");
+      }
+    });
+  });
+}
+
+// ===================================================================
+// НОВЫЕ ФУНКЦИИ (встроенные waitForElement)
+// ===================================================================
+
+// ✅ Функция: Выдать все элементы (новая логика)
+async function clickAllGiveOutItems() {
+  // Найти все элементы, у которых data-testid содержит "posting"
+  const elements = document.querySelectorAll('[data-testid*="posting"]');
+
+  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
+  const filteredElements = Array.from(elements).filter(el => {
+    const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
+    return !(uinElement && uinElement.textContent.trim() === "УИН");
+  });
+
+  console.log(`Найдено ${elements.length} элементов с data-testid, содержащим "posting".`);
+  console.log(`После фильтрации осталось ${filteredElements.length} элементов.`);
+
+  // Для каждого отфильтрованного элемента:
+  for (let i = 0; i < filteredElements.length; i++) {
+    const el = filteredElements[i];
+    console.log(`🔍 Обработка элемента #${i}:`, el);
+
+    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
+    const popoverElement = el.querySelector('.ozi__popover__fixReferenceSize__xaASc');
+
+    if (popoverElement) {
+      console.log(`✅ Найден popover элемент в #${i}, кликаю:`, popoverElement);
+      popoverElement.click();
+
+      try {
+        // Ждём появление элемента data-testid="postingDropDownItemToGiveOut"
+        const targetElement = await new Promise((resolve, reject) => {
+          const startTime = Date.now();
+          const interval = 100; // Проверяем каждые 100мс
+
+          const check = () => {
+            const element = document.querySelector('[data-testid="postingDropDownItemToGiveOut"]');
+            if (element) {
+              resolve(element);
+              return;
+            }
+            if (Date.now() - startTime > 5000) { // 5 секунд
+              reject(new Error("Timeout: элемент не появился"));
+              return;
+            }
+            setTimeout(check, interval);
+          };
+
+          check();
+        });
+
+        if (targetElement) {
+          console.log(`✅ Найден элемент "Выдать", кликаю...`, targetElement);
+          targetElement.click();
+        } else {
+          console.log(`⚠️ Элемент "Выдать" не найден в элементе #${i}.`);
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка ожидания элемента в #${i}:`, error.message);
+      }
+
+      // Небольшая пауза перед следующим элементом
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+    } else {
+      console.log(`❌ popover элемент не найден в элементе #${i}.`);
+    }
+  }
+
+  console.log("✅ Обработка завершена.");
+}
+
+// ✅ Функция: Выдать все, кроме дешёвого (новая логика)
+async function clickAllGiveOutItemsExceptCheapest() {
+  // Найти все элементы, у которых data-testid содержит "posting"
+  const elements = document.querySelectorAll('[data-testid*="posting"]');
+
+  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
+  const filteredElements = Array.from(elements).filter(el => {
+    const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
+    return !(uinElement && uinElement.textContent.trim() === "УИН");
+  });
+
+  if (filteredElements.length === 0) {
+    console.log("❌ Нет подходящих элементов для обработки.");
+    return;
+  }
+
+  // Найти цены для каждого элемента
+  const itemsWithPrice = [];
+
+  for (let i = 0; i < filteredElements.length; i++) {
+    const el = filteredElements[i];
+
+    // Найти внутри него цену по классу "_money_1vf2o_108 ozi-body-500-true _price_1vf2o_116"
+    const priceElement = el.querySelector('._money_1vf2o_108.ozi-body-500-true._price_1vf2o_116');
     let price = null;
 
-    if (priceCell) {
-      const priceText = priceCell.textContent.trim();
-      // Извлекаем число из строки (например, "1 234 руб." → 1234)
+    if (priceElement) {
+      const priceText = priceElement.textContent.trim();
       const match = priceText.match(/[\d\s.,]+/);
       if (match) {
         price = parseFloat(match[0].replace(/[^\d.]/g, ''));
@@ -191,119 +258,281 @@ function getAllCheckBoxesExceptOne(tableRowsQuerySelector) {
     }
 
     if (price === null) {
-      console.log(`⚠️ Цена не найдена в строке #${index}, будет пропущена.`);
-      return;
+      console.log(`⚠️ Цена не найдена в элементе #${i}, будет пропущен.`);
+      continue;
     }
 
-    items.push({
-      index,
-      input,
-      price,
+    itemsWithPrice.push({
+      index: i,
+      element: el,
+      price: price,
     });
-  });
+  }
 
-  if (items.length === 0) {
-    console.log("❌ Ни один товар не подошёл для обработки (нет цены или чекбокса).");
+  if (itemsWithPrice.length === 0) {
+    console.log("❌ Ни один товар не подошёл для обработки (нет цены).");
     return;
   }
 
-  // Находим товар с минимальной ценой
-  let minPriceItem = items[0];
-  for (let i = 1; i < items.length; i++) {
-    if (items[i].price < minPriceItem.price) {
-      minPriceItem = items[i];
+  // Найти товар с минимальной ценой
+  let minPriceItem = itemsWithPrice[0];
+  for (let i = 1; i < itemsWithPrice.length; i++) {
+    if (itemsWithPrice[i].price < minPriceItem.price) {
+      minPriceItem = itemsWithPrice[i];
     }
   }
 
-  console.log(`💰 Минимальная цена: ${minPriceItem.price}, строка #${minPriceItem.index}.`);
+  console.log(`💰 Минимальная цена: ${minPriceItem.price}, элемент #${minPriceItem.index}.`);
 
-  // Кликаем по всем, кроме строки с минимальной ценой
-  items.forEach(item => {
+  // Обработать все, кроме дешёвого
+  for (let i = 0; i < itemsWithPrice.length; i++) {
+    const item = itemsWithPrice[i];
+
     if (item.index === minPriceItem.index) {
-      console.log(`⏭️ Пропущена строка #${item.index} (минимальная цена).`);
-      return;
+      console.log(`⏭️ Пропущен элемент #${item.index} (минимальная цена).`);
+      continue;
     }
 
-    setTimeout(() => {
-      if (item.input && !item.input.disabled && item.input.offsetParent !== null) {
-        const event = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0,
-        });
-        item.input.dispatchEvent(event);
-      }
-    }, item.index * 50);
-  });
+    console.log(`🔍 Обработка элемента #${item.index}:`, item.element);
 
-  console.log(`✅ Выбрано ${items.length - 1} товаров (все, кроме минимальной цены).`);
+    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
+    const popoverElement = item.element.querySelector('.ozi__popover__fixReferenceSize__xaASc');
+
+    if (popoverElement) {
+      console.log(`✅ Найден popover элемент в #${item.index}, кликаю:`, popoverElement);
+      popoverElement.click();
+
+      try {
+        // Ждём появление элемента data-testid="postingDropDownItemToGiveOut"
+        const targetElement = await new Promise((resolve, reject) => {
+          const startTime = Date.now();
+          const interval = 100; // Проверяем каждые 100мс
+
+          const check = () => {
+            const element = document.querySelector('[data-testid="postingDropDownItemToGiveOut"]');
+            if (element) {
+              resolve(element);
+              return;
+            }
+            if (Date.now() - startTime > 5000) { // 5 секунд
+              reject(new Error("Timeout: элемент не появился"));
+              return;
+            }
+            setTimeout(check, interval);
+          };
+
+          check();
+        });
+
+        if (targetElement) {
+          console.log(`✅ Найден элемент "Выдать", кликаю...`, targetElement);
+          targetElement.click();
+        } else {
+          console.log(`⚠️ Элемент "Выдать" не найден в элементе #${item.index}.`);
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка ожидания элемента в #${item.index}:`, error.message);
+      }
+
+      // Небольшая пауза перед следующим элементом
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+    } else {
+      console.log(`❌ popover элемент не найден в элементе #${item.index}.`);
+    }
+  }
+
+  console.log("✅ Обработка завершена.");
 }
 
-function getFixedCheckBoxes(number, tableRowsQuerySelector) {
-  const rows = document.querySelectorAll(tableRowsQuerySelector);
-  const inputs = [];
+// ✅ Функция: Выдать N штук (новая логика)
+async function clickAllGiveOutItemsFixed(number) {
+  // Найти все элементы, у которых data-testid содержит "posting"
+  const elements = document.querySelectorAll('[data-testid*="posting"]');
 
-  rows.forEach(row => {
-    const input = row.querySelector("td:nth-child(1) > label > div > input[type='checkbox']");
-    if (input && !input.disabled && input.offsetParent !== null) inputs.push(input);
+  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
+  const filteredElements = Array.from(elements).filter(el => {
+    const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
+    return !(uinElement && uinElement.textContent.trim() === "УИН");
   });
 
-  if (number > inputs.length) {
+  if (number > filteredElements.length) {
     alert("Число больше количества позиций");
     return;
   }
 
-  console.log(`🔍 Найдено ${inputs.length} доступных чекбоксов.`);
+  console.log(`Найдено ${elements.length} элементов с data-testid, содержащим "posting".`);
+  console.log(`После фильтрации осталось ${filteredElements.length} элементов.`);
+  console.log(`Будет обработано ${number} элементов.`);
 
+  // Обработать только N первых
   for (let i = 0; i < number; i++) {
-    const input = inputs[i];
-    setTimeout(() => {
-      if (input && !input.disabled && input.offsetParent !== null) {
-        const event = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window,
-          button: 0,
+    const el = filteredElements[i];
+    console.log(`🔍 Обработка элемента #${i}:`, el);
+
+    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
+    const popoverElement = el.querySelector('.ozi__popover__fixReferenceSize__xaASc');
+
+    if (popoverElement) {
+      console.log(`✅ Найден popover элемент в #${i}, кликаю:`, popoverElement);
+      popoverElement.click();
+
+      try {
+        // Ждём появление элемента data-testid="postingDropDownItemToGiveOut"
+        const targetElement = await new Promise((resolve, reject) => {
+          const startTime = Date.now();
+          const interval = 100; // Проверяем каждые 100мс
+
+          const check = () => {
+            const element = document.querySelector('[data-testid="postingDropDownItemToGiveOut"]');
+            if (element) {
+              resolve(element);
+              return;
+            }
+            if (Date.now() - startTime > 5000) { // 5 секунд
+              reject(new Error("Timeout: элемент не появился"));
+              return;
+            }
+            setTimeout(check, interval);
+          };
+
+          check();
         });
-        input.dispatchEvent(event);
-      } else {
-        console.log(`❌ Пропущен элемент #${i} (фиксированное количество) при клике:`, {
-          input: input,
-          disabled: input?.disabled || 'n/a',
-          offsetParent: input?.offsetParent || 'n/a',
-        });
+
+        if (targetElement) {
+          console.log(`✅ Найден элемент "Выдать", кликаю...`, targetElement);
+          targetElement.click();
+        } else {
+          console.log(`⚠️ Элемент "Выдать" не найден в элементе #${i}.`);
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка ожидания элемента в #${i}:`, error.message);
       }
-    }, i * 50);
+
+      // Небольшая пауза перед следующим элементом
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+    } else {
+      console.log(`❌ popover элемент не найден в элементе #${i}.`);
+    }
   }
 
-  console.log(`✅ Запланировано ${number} кликов.`);
+  console.log("✅ Обработка завершена.");
 }
 
-function getAllEmptyContainerBoxes() {
-    const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_les3l_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
-    const rightColumn = document.querySelector(rightColumnSelector);
+// ✅ Функция: Снять выделение с "К выдаче" (новая логика)
+// ✅ Функция: Снять выделение с "К выдаче" (новая логика)
+async function clickAllUncheckGivenOutItems() {
+  // Найти все элементы, у которых data-testid содержит "posting"
+  const elements = document.querySelectorAll('[data-testid*="posting"]');
 
-    if (!rightColumn) {
-        console.error("❌ Правый блок не найден.");
-        return;
+  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
+  const filteredElements = Array.from(elements).filter(el => {
+    const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
+    return !(uinElement && uinElement.textContent.trim() === "УИН");
+  });
+
+  console.log(`Найдено ${elements.length} элементов с data-testid, содержащим "posting".`);
+  console.log(`После фильтрации осталось ${filteredElements.length} элементов.`);
+
+  // Для каждого отфильтрованного элемента:
+  for (let i = 0; i < filteredElements.length; i++) {
+    const el = filteredElements[i];
+    console.log(`🔍 Обработка элемента #${i}:`, el);
+
+    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
+    const popoverElement = el.querySelector('.ozi__popover__fixReferenceSize__xaASc');
+
+    if (popoverElement) {
+      console.log(`✅ Найден popover элемент в #${i}, кликаю:`, popoverElement);
+      popoverElement.click();
+
+      try {
+        // Ждём появление элемента с классом ozi__dropdown-item__dropdownItem__cDZcD.ozi__dropdown-item__size-500__cDZcD
+        const targetElement = await new Promise((resolve, reject) => {
+          const startTime = Date.now();
+          const interval = 100; // Проверяем каждые 100мс
+
+          const check = () => {
+            const element = document.querySelector('.ozi__dropdown-item__dropdownItem__cDZcD.ozi__dropdown-item__size-500__cDZcD');
+            if (element) {
+              resolve(element);
+              return;
+            }
+            if (Date.now() - startTime > 5000) { // 5 секунд
+              reject(new Error("Timeout: элемент 'ozi__dropdown-item__dropdownItem__cDZcD.ozi__dropdown-item__size-500__cDZcD' не появился"));
+              return;
+            }
+            setTimeout(check, interval);
+          };
+
+          check();
+        });
+
+        if (targetElement) {
+          const targetText = targetElement.textContent.trim();
+          console.log(`✅ Найден элемент с классом 'ozi__dropdown-item__dropdownItem__cDZcD ozi__dropdown-item__size-500__cDZcD'. Текст: "${targetText}"`);
+
+          if (targetText === "Оставить на хранении") {
+            console.log(`✅ Текст совпадает с "Оставить на хранении", кликаю...`, targetElement);
+            targetElement.click();
+          } else {
+            console.log(`⏭️ Текст "${targetText}" не совпадает с "Оставить на хранении", кликаю по popover элементу #${i} для закрытия меню.`, popoverElement);
+            // Клик по popoverElement, чтобы закрыть меню
+            popoverElement.click();
+          }
+        } else {
+          console.log(`⚠️ Элемент с классом 'ozi__dropdown-item__dropdownItem__cDZcD ozi__dropdown-item__size-500__cDZcD' не найден в элементе #${i}.`);
+          // Если элемент не появился, попробуем кликнуть по popoverElement, чтобы закрыть меню, если оно как-то открылось
+          console.log(`ℹ️ Попытка закрыть меню кликом по popover элементу #${i}.`, popoverElement);
+          if (popoverElement) {
+            popoverElement.click();
+          }
+        }
+      } catch (error) {
+        console.error(`❌ Ошибка ожидания элемента с классом 'ozi__dropdown-item__dropdownItem__cDZcD ozi__dropdown-item__size-500__cDZcD' в #${i}:`, error.message);
+        // Если ожидание завершилось ошибкой, тоже попробуем кликнуть по popoverElement, чтобы закрыть меню
+        console.log(`ℹ️ Попытка закрыть меню кликом по popover элементу #${i} после ошибки.`, popoverElement);
+        if (popoverElement) {
+          popoverElement.click();
+        }
+      }
+    } else {
+      console.log(`❌ popover элемент (ozi__popover__fixReferenceSize__xaASc) не найден в элементе #${i}.`);
     }
 
-    const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_1b09z_17"));
+    // Небольшая пауза перед следующим элементом
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
 
-    const filteredItems = items.filter(item => {
-        const text = item.textContent;
-        return text.includes("%301%") || text.includes("ВТ") || text.includes("BT");
-    });
+  console.log("✅ Обработка завершена.");
+}
 
-    let clickedCount = 0;
-    filteredItems.forEach(item => {
-        const input = item.querySelector("input[type='checkbox']");
-        if (input && typeof input.click === "function") {
-            input.click();
-            clickedCount++;
-        }
-    });
+// ✅ Функция: Выбрать тарные ящики (старая логика, обновлённые селекторы)
+function getAllEmptyContainerBoxes() {
+  const rightColumn = document.querySelector(rightColumnSelector);
 
-    console.log(`✅ Выбрано ${clickedCount} тарных ящиков (${filteredItems.length} найдено).`);
+  if (!rightColumn) {
+    console.error("❌ Правый блок не найден.");
+    return;
+  }
+
+  // Используем новый класс элемента
+  const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_1b09z_17"));
+
+  const filteredItems = items.filter(item => {
+    const text = item.textContent;
+    return text.includes("%301%") || text.includes("ВТ") || text.includes("BT");
+  });
+
+  let clickedCount = 0;
+  filteredItems.forEach(item => {
+    const input = item.querySelector("input[type='checkbox']");
+    if (input && typeof input.click === "function") {
+      input.click();
+      clickedCount++;
+    }
+  });
+
+  console.log(`✅ Выбрано ${clickedCount} тарных ящиков (${filteredItems.length} найдено).`);
 }
