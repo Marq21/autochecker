@@ -5,11 +5,7 @@ const emptyContainersButton = document.getElementById("emptyContainersButton");
 const startBtnCount = document.getElementById("startBtnCount");
 const inputNumber = document.getElementById("inputNumber");
 
-// Новая кнопка: Снять выделение с "К выдаче"
 const uncheckGivenOutBtn = document.getElementById("uncheckGivenOutBtn");
-
-// Новые функции (как раньше) — но обновлённые селекторы
-const rightColumnSelector = "#__nuxt > div > div._container_hevb3_17._containerFull_hevb3_24 > div:nth-child(2) > div > div > div._outboundLayout_les3l_1 > div._outboundCommander_1014z_1 > div:nth-child(2)";
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -508,29 +504,67 @@ async function clickAllUncheckGivenOutItems() {
   console.log("✅ Обработка завершена.");
 }
 
-// ✅ Функция: Выбрать тарные ящики (старая логика, обновлённые селекторы)
 function getAllEmptyContainerBoxes() {
-  const rightColumn = document.querySelector(rightColumnSelector);
+  // Найти все блоки с классом _block_1b09z_1
+  const allBlocks = document.querySelectorAll("div._block_1b09z_1");
 
-  if (!rightColumn) {
-    console.error("❌ Правый блок не найден.");
+  // Найти среди них тот, внутри которого есть элемент с классом _breadcrumbsTitle_1014z_8 и текстом "Добавьте содержимое в перевозку"
+  let targetBlock = null;
+  for (const block of allBlocks) {
+    const titleElement = block.querySelector("._breadcrumbsTitle_1014z_8");
+    if (titleElement && titleElement.textContent.includes("Добавьте содержимое в перевозку")) {
+      targetBlock = block;
+      break;
+    }
+  }
+
+  if (!targetBlock) {
+    console.error("❌ Блок с заголовком 'Добавьте содержимое в перевозку' не найден.");
     return;
   }
 
-  // Используем новый класс элемента
-  const items = Array.from(rightColumn.querySelectorAll("div._itemsElement_1b09z_17"));
+  console.log("✅ Найден целевой блок для поиска тарных ящиков.");
 
+  // Используем селектор для элементов тарных ящиков внутри целевого блока
+  // Попробуем оба известных класса: _itemsElement_1b09z_17 и _itemsElement_4j0aa_17
+  const items = Array.from(targetBlock.querySelectorAll("div._element_4ir1z_1._list_4ir1z_20._itemsElement_1b09z_17, div._element_3p2ql_1._list_3p2ql_20._itemsElement_4j0aa_17"));
+
+  console.log(`🔍 Найдено ${items.length} потенциальных элементов в целевом блоке.`);
+
+  // Фильтруем элементы по содержанию "ВТ" или "%301%" или "BT"
   const filteredItems = items.filter(item => {
-    const text = item.textContent;
-    return text.includes("%301%") || text.includes("ВТ") || text.includes("BT");
+    // Проверяем _titleWrap_1dwqc_13 на "ВТ" или "BT" (предполагаем, что _titleWrap_1ailj_14 это и есть _titleWrap_1dwqc_13)
+    const titleWrapElement = item.querySelector("._titleWrap_1ailj_14, ._titleWrap_1dwqc_13"); // Попробуем оба селектора
+    const hasVTOrBT = titleWrapElement && (titleWrapElement.textContent.includes("ВТ") || titleWrapElement.textContent.includes("BT"));
+
+    // Проверяем _row_1dwqc_6 на "%301%" (предполагаем, что _barcode_1ailj_7 это и есть _row_1dwqc_6)
+    const rowElement = item.querySelector("._barcode_1ailj_7, ._row_1dwqc_6"); // Попробуем оба селектора
+    const has301 = rowElement && rowElement.textContent.includes("%301%");
+
+    // Возвращаем true, если хотя бы одно условие выполнено
+    return hasVTOrBT || has301;
   });
+
+  console.log(`🔍 Найдено ${filteredItems.length} элементов, подходящих под критерии ("ВТ", "BT" или "%301%").`);
 
   let clickedCount = 0;
   filteredItems.forEach(item => {
-    const input = item.querySelector("input[type='checkbox']");
+    // Используем селектор для чекбокса, указанный вами
+    const input = item.querySelector("input.ozi__checkbox__checkbox__LJWlw");
     if (input && typeof input.click === "function") {
       input.click();
       clickedCount++;
+      console.log(`✅ Клик по чекбоксу в элементе:`, item);
+    } else {
+      // Если не нашли по LJWlw, попробуем dsZ5H (на случай, если структура различается)
+      const inputAlt = item.querySelector("input.ozi__checkbox__checkbox__dsZ5H");
+      if (inputAlt && typeof inputAlt.click === "function") {
+        inputAlt.click();
+        clickedCount++;
+        console.log(`✅ Клик по альтернативному чекбоксу в элементе:`, item);
+      } else {
+        console.warn(`⚠️ Ни один из ожидаемых чекбоксов не найден или недоступен в элементе:`, item);
+      }
     }
   });
 
