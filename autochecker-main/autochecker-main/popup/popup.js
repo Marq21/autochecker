@@ -52,7 +52,6 @@ function showUpdateNotification(version, body) {
   });
 }
 
-// ✅ Старая кнопка: Выдать все, кроме дешёвого (новая логика)
 startBtn.addEventListener("click", () => {
   chrome.tabs.query({ active: true }, function (tabs) {
     var tab = tabs[0];
@@ -69,7 +68,6 @@ startBtn.addEventListener("click", () => {
   });
 });
 
-// ✅ Старая кнопка: Выдать всё (новая логика)
 startBtnAll.addEventListener("click", () => {
   chrome.tabs.query({ active: true }, function (tabs) {
     var tab = tabs[0];
@@ -86,7 +84,7 @@ startBtnAll.addEventListener("click", () => {
   });
 });
 
-// ✅ Старая кнопка: Выдать N штук (новая логика)
+
 startBtnCount.addEventListener("click", () => {
   const number = parseInt(inputNumber.value, 10);
   if (isNaN(number) || number <= 0) {
@@ -110,7 +108,6 @@ startBtnCount.addEventListener("click", () => {
   });
 });
 
-// ✅ Возвращённая кнопка: Выбрать тарные ящики (старая логика, обновлённые селекторы)
 emptyContainersButton.addEventListener("click", () => {
   chrome.tabs.query({ active: true }, function (tabs) {
     var tab = tabs[0];
@@ -127,7 +124,6 @@ emptyContainersButton.addEventListener("click", () => {
   });
 });
 
-// ✅ Новая кнопка: Снять выделение с "К выдаче"
 if (uncheckGivenOutBtn) {
   uncheckGivenOutBtn.addEventListener("click", () => {
     chrome.tabs.query({ active: true }, function (tabs) {
@@ -146,16 +142,10 @@ if (uncheckGivenOutBtn) {
   });
 }
 
-// ===================================================================
-// НОВЫЕ ФУНКЦИИ (встроенные waitForElement)
-// ===================================================================
 
-// ✅ Функция: Выдать все элементы (новая логика)
 async function clickAllGiveOutItems() {
-  // Найти все элементы, у которых data-testid содержит "posting"
   const elements = document.querySelectorAll('[data-testid*="posting"]');
 
-  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
   const filteredElements = Array.from(elements).filter(el => {
     const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
     return !(uinElement && uinElement.textContent.trim() === "УИН");
@@ -164,12 +154,10 @@ async function clickAllGiveOutItems() {
   console.log(`Найдено ${elements.length} элементов с data-testid, содержащим "posting".`);
   console.log(`После фильтрации осталось ${filteredElements.length} элементов.`);
 
-  // Для каждого отфильтрованного элемента:
   for (let i = 0; i < filteredElements.length; i++) {
     const el = filteredElements[i];
     console.log(`🔍 Обработка элемента #${i}:`, el);
 
-    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
     const popoverElement = el.querySelector('.ozi__popover__fixReferenceSize__xaASc');
 
     if (popoverElement) {
@@ -177,10 +165,9 @@ async function clickAllGiveOutItems() {
       popoverElement.click();
 
       try {
-        // Ждём появление элемента data-testid="postingDropDownItemToGiveOut"
         const targetElement = await new Promise((resolve, reject) => {
           const startTime = Date.now();
-          const interval = 100; // Проверяем каждые 100мс
+          const interval = 100;
 
           const check = () => {
             const element = document.querySelector('[data-testid="postingDropDownItemToGiveOut"]');
@@ -188,7 +175,7 @@ async function clickAllGiveOutItems() {
               resolve(element);
               return;
             }
-            if (Date.now() - startTime > 5000) { // 5 секунд
+            if (Date.now() - startTime > 5000) {
               reject(new Error("Timeout: элемент не появился"));
               return;
             }
@@ -207,8 +194,6 @@ async function clickAllGiveOutItems() {
       } catch (error) {
         console.error(`❌ Ошибка ожидания элемента в #${i}:`, error.message);
       }
-
-      // Небольшая пауза перед следующим элементом
       await new Promise(resolve => setTimeout(resolve, 500));
 
     } else {
@@ -219,12 +204,9 @@ async function clickAllGiveOutItems() {
   console.log("✅ Обработка завершена.");
 }
 
-// ✅ Функция: Выдать все, кроме дешёвого (новая логика)
 async function clickAllGiveOutItemsExceptCheapest() {
-  // Найти все элементы, у которых data-testid содержит "posting"
   const elements = document.querySelectorAll('[data-testid*="posting"]');
 
-  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
   const filteredElements = Array.from(elements).filter(el => {
     const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
     return !(uinElement && uinElement.textContent.trim() === "УИН");
@@ -235,13 +217,11 @@ async function clickAllGiveOutItemsExceptCheapest() {
     return;
   }
 
-  // Найти цены для каждого элемента
   const itemsWithPrice = [];
 
   for (let i = 0; i < filteredElements.length; i++) {
     const el = filteredElements[i];
 
-    // Найти внутри него цену по классу "_money_1vf2o_108 ozi-body-500-true _price_1vf2o_116"
     const priceElement = el.querySelector('._money_1vf2o_108.ozi-body-500-true._price_1vf2o_116');
     let price = null;
 
@@ -270,7 +250,6 @@ async function clickAllGiveOutItemsExceptCheapest() {
     return;
   }
 
-  // Найти товар с минимальной ценой
   let minPriceItem = itemsWithPrice[0];
   for (let i = 1; i < itemsWithPrice.length; i++) {
     if (itemsWithPrice[i].price < minPriceItem.price) {
@@ -280,7 +259,6 @@ async function clickAllGiveOutItemsExceptCheapest() {
 
   console.log(`💰 Минимальная цена: ${minPriceItem.price}, элемент #${minPriceItem.index}.`);
 
-  // Обработать все, кроме дешёвого
   for (let i = 0; i < itemsWithPrice.length; i++) {
     const item = itemsWithPrice[i];
 
@@ -291,7 +269,6 @@ async function clickAllGiveOutItemsExceptCheapest() {
 
     console.log(`🔍 Обработка элемента #${item.index}:`, item.element);
 
-    // Найти внутри него элемент с классом ozi__popover__fixReferenceSize__xaASc
     const popoverElement = item.element.querySelector('.ozi__popover__fixReferenceSize__xaASc');
 
     if (popoverElement) {
@@ -341,7 +318,6 @@ async function clickAllGiveOutItemsExceptCheapest() {
   console.log("✅ Обработка завершена.");
 }
 
-// ✅ Функция: Выдать N штук (новая логика)
 async function clickAllGiveOutItemsFixed(number) {
   // Найти все элементы, у которых data-testid содержит "posting"
   const elements = document.querySelectorAll('[data-testid*="posting"]');
@@ -416,13 +392,9 @@ async function clickAllGiveOutItemsFixed(number) {
   console.log("✅ Обработка завершена.");
 }
 
-// ✅ Функция: Снять выделение с "К выдаче" (новая логика)
-// ✅ Функция: Снять выделение с "К выдаче" (новая логика)
 async function clickAllUncheckGivenOutItems() {
-  // Найти все элементы, у которых data-testid содержит "posting"
   const elements = document.querySelectorAll('[data-testid*="posting"]');
 
-  // Отфильтровать: исключить элементы, внутри которых есть div с классом и текстом "УИН"
   const filteredElements = Array.from(elements).filter(el => {
     const uinElement = el.querySelector('.ozi__truncate__truncate__7a-6_.ozi__badge__label__Rb41r');
     return !(uinElement && uinElement.textContent.trim() === "УИН");
@@ -431,7 +403,6 @@ async function clickAllUncheckGivenOutItems() {
   console.log(`Найдено ${elements.length} элементов с data-testid, содержащим "posting".`);
   console.log(`После фильтрации осталось ${filteredElements.length} элементов.`);
 
-  // Для каждого отфильтрованного элемента:
   for (let i = 0; i < filteredElements.length; i++) {
     const el = filteredElements[i];
     console.log(`🔍 Обработка элемента #${i}:`, el);
@@ -505,7 +476,6 @@ async function clickAllUncheckGivenOutItems() {
 }
 
 function getAllEmptyContainerBoxes() {
-  // Найти все блоки с классом _block_1b09z_1
   const allBlocks = document.querySelectorAll("div._block_1b09z_1");
 
   // Найти среди них тот, внутри которого есть элемент с классом _breadcrumbsTitle_1014z_8 и текстом "Добавьте содержимое в перевозку"
@@ -525,9 +495,7 @@ function getAllEmptyContainerBoxes() {
 
   console.log("✅ Найден целевой блок для поиска тарных ящиков.");
 
-  // Используем селектор для элементов тарных ящиков внутри целевого блока
-  // Попробуем оба известных класса: _itemsElement_1b09z_17 и _itemsElement_4j0aa_17
-  const items = Array.from(targetBlock.querySelectorAll("div._element_4ir1z_1._list_4ir1z_20._itemsElement_1b09z_17, div._element_3p2ql_1._list_3p2ql_20._itemsElement_4j0aa_17"));
+  const items = Array.from(targetBlock.querySelectorAll("div._element_aug7a_1 _list_aug7a_20, div._itemsElement_1b09z_17"));
 
   console.log(`🔍 Найдено ${items.length} потенциальных элементов в целевом блоке.`);
 
@@ -538,7 +506,7 @@ function getAllEmptyContainerBoxes() {
     const hasVTOrBT = titleWrapElement && (titleWrapElement.textContent.includes("ВТ") || titleWrapElement.textContent.includes("BT"));
 
     // Проверяем _row_1dwqc_6 на "%301%" (предполагаем, что _barcode_1ailj_7 это и есть _row_1dwqc_6)
-    const rowElement = item.querySelector("._barcode_1ailj_7, ._row_1dwqc_6"); // Попробуем оба селектора
+    const rowElement = item.querySelector("._row_1dwqc_6"); // Попробуем оба селектора
     const has301 = rowElement && rowElement.textContent.includes("%301%");
 
     // Возвращаем true, если хотя бы одно условие выполнено
