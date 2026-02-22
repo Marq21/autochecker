@@ -1,4 +1,4 @@
-// Старые кнопки (оставляем id и названия)
+
 const startBtn = document.getElementById("startBtn");
 const startBtnAll = document.getElementById("startBtnAll");
 const emptyContainersButton = document.getElementById("emptyContainersButton");
